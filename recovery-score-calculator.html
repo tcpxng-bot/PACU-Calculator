@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recovery Score Calculator</title>
+<style>
+  :root{
+    --bg:#f4f6f8;
+    --card:#ffffff;
+    --primary:#2b6cb0;
+    --primary-dark:#1a4e8a;
+    --accent:#2f855a;
+    --text:#1a202c;
+    --muted:#718096;
+    --border:#e2e8f0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', 'Sarabun', Tahoma, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:16px;
+    padding-bottom:100px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  h1{
+    font-size:1.3rem;
+    text-align:center;
+    margin-bottom:4px;
+    color:var(--primary-dark);
+  }
+  .sub{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.85rem;
+    margin-bottom:16px;
+  }
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+    background:var(--card);
+    padding:6px;
+    border-radius:12px;
+    border:1px solid var(--border);
+  }
+  .tab-btn{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:transparent;
+    font-size:0.9rem;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+    transition:all 0.15s;
+  }
+  .tab-btn.active{
+    background:var(--primary);
+    color:white;
+  }
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    border:1px solid var(--border);
+  }
+  .card h2{
+    font-size:1rem;
+    margin:0 0 12px 0;
+    color:var(--primary);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .badge{
+    background:var(--primary);
+    color:white;
+    border-radius:8px;
+    padding:2px 8px;
+    font-size:0.85rem;
+    font-weight:bold;
+    min-width:24px;
+    text-align:center;
+  }
+  .options label{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    margin-bottom:6px;
+    border:1px solid var(--border);
+    cursor:pointer;
+    transition:all 0.15s;
+  }
+  .options label:hover{background:#f7fafc;}
+  .options input[type=radio]{
+    width:18px;height:18px;accent-color:var(--primary);flex-shrink:0;
+  }
+  .options label.selected{
+    background:#ebf4ff;
+    border-color:var(--primary);
+  }
+  .opt-text{flex:1;font-size:0.95rem;}
+  .opt-score{
+    font-weight:bold;
+    color:var(--primary);
+    font-size:0.9rem;
+  }
+  .bp-inputs{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .bp-field{flex:1;min-width:120px;}
+  .bp-field label{
+    display:block;
+    font-size:0.8rem;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .bp-field input{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    font-size:1rem;
+  }
+  .bp-result{
+    background:#f7fafc;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:0.9rem;
+    color:var(--text);
+    border:1px dashed var(--border);
+  }
+  .bp-result b{color:var(--primary-dark);}
+  .total-card{
+    position:fixed;
+    left:16px;
+    right:16px;
+    bottom:12px;
+    max-width:608px;
+    margin:0 auto;
+    background:var(--primary-dark);
+    color:white;
+    border-radius:14px;
+    padding:16px 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    z-index:10;
+  }
+  .total-card .label{font-size:0.95rem;}
+  .total-card .score{font-size:1.8rem;font-weight:bold;}
+  .verdict{
+    font-size:0.8rem;
+    opacity:0.9;
+    margin-top:2px;
+  }
+  .ready{color:#68d391;}
+  .notready{color:#fbd38d;}
+  .refs{
+    background:var(--card);
+    border-radius:14px;
+    padding:16px 18px;
+    border:1px solid var(--border);
+    font-size:0.78rem;
+    color:var(--muted);
+    line-height:1.6;
+  }
+  .refs h3{
+    font-size:0.85rem;
+    color:var(--text);
+    margin:0 0 8px 0;
+  }
+  .refs a{color:var(--primary);word-break:break-all;}
+  .refs ol{padding-left:18px;margin:0;}
+  .refs li{margin-bottom:6px;}
+  .note{
+    font-size:0.78rem;
+    color:var(--muted);
+    background:#fffaf0;
+    border:1px solid #feebc8;
+    border-radius:8px;
+    padding:8px 10px;
+    margin-bottom:14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏥 Recovery Score Calculator</h1>
+  <div class="sub">เลือกแบบประเมินที่ต้องการ ระบบจะคำนวณคะแนนให้อัตโนมัติ</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="aldrete">Modified Aldrete Score</button>
+    <button class="tab-btn" data-tab="padss">PADSS Score</button>
+  </div>
+
+  <!-- ============ ALDRETE PANEL ============ -->
+  <div class="panel active" id="panel-aldrete">
+    <div class="note">ใช้ประเมินความพร้อมย้ายออกจาก PACU (Phase I recovery) — คะแนนเต็ม 10, พร้อมย้ายเมื่อ ≥ 9</div>
+
+    <div class="card">
+      <h2>ACTIVITY <span class="badge" id="a-score-activity">-</span></h2>
+      <div class="options" data-group="a-activity">
+        <label data-score="2"><input type="radio" name="a-activity"><span class="opt-text">สามารถขยับแขนขาได้ 4 ข้าง</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="a-activity"><span class="opt-text">สามารถขยับแขนขาได้ 2 ข้าง</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="a-activity"><span class="opt-text">ขยับแขนขาไม่ได้เลย</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>RESPIRATION <span class="badge" id="a-score-respiration">-</span></h2>
+      <div class="options" data-group="a-respiration">
+        <label data-score="2"><input type="radio" name="a-respiration"><span class="opt-text">หายใจลึกและไอได้</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="a-respiration"><span class="opt-text">หายใจลำบาก/หายใจจำกัด</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="a-respiration"><span class="opt-text">หยุดหายใจ (Apnea)</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>CIRCULATION (BP) <span class="badge" id="a-score-circulation">-</span></h2>
+      <div class="bp-inputs">
+        <div class="bp-field">
+          <label>BP Preop (mmHg)</label>
+          <input type="text" id="a-bpPreop" placeholder="เช่น 120/80">
+        </div>
+        <div class="bp-field">
+          <label>BP ปัจจุบัน (mmHg)</label>
+          <input type="text" id="a-bpNow" placeholder="เช่น 110/70">
+        </div>
+      </div>
+      <div class="bp-result" id="a-bpResult">กรอกค่า BP ทั้งสองช่อง (เช่น 120/80) เพื่อคำนวณ % การเปลี่ยนแปลง</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">เกณฑ์: ±20% = 2, ±20-50% = 1, ±50% = 0</div>
+    </div>
+
+    <div class="card">
+      <h2>CONSCIOUSNESS <span class="badge" id="a-score-consciousness">-</span></h2>
+      <div class="options" data-group="a-consciousness">
+        <label data-score="2"><input type="radio" name="a-consciousness"><span class="opt-text">รู้สึกตัวดี (Fully awake)</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="a-consciousness"><span class="opt-text">ปลุกตื่นเมื่อเรียก (Arousable on calling)</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="a-consciousness"><span class="opt-text">ไม่ตอบสนอง</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>OXYGEN SATURATION <span class="badge" id="a-score-o2">-</span></h2>
+      <div class="options" data-group="a-o2">
+        <label data-score="2"><input type="radio" name="a-o2"><span class="opt-text">O2 sat &gt; 92% (room air)</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="a-o2"><span class="opt-text">ต้องให้ O2 เพื่อ sat &gt; 90%</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="a-o2"><span class="opt-text">O2 sat &lt; 90% แม้ให้ออกซิเจนเสริม</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PADSS PANEL ============ -->
+  <div class="panel" id="panel-padss">
+    <div class="note">ใช้ประเมินความพร้อมกลับบ้านหลัง Day Surgery (Phase II / discharge) — คะแนนเต็ม 10, พร้อมกลับบ้านเมื่อ ≥ 9</div>
+
+    <div class="card">
+      <h2>VITAL SIGNS (BP &amp; HR) <span class="badge" id="p-score-vitals">-</span></h2>
+      <div class="bp-inputs">
+        <div class="bp-field">
+          <label>BP Preop (mmHg)</label>
+          <input type="text" id="p-bpPreop" placeholder="เช่น 120/80">
+        </div>
+        <div class="bp-field">
+          <label>BP ปัจจุบัน (mmHg)</label>
+          <input type="text" id="p-bpNow" placeholder="เช่น 110/70">
+        </div>
+      </div>
+      <div class="bp-result" id="p-bpResult">กรอกค่า BP ทั้งสองช่อง (เช่น 120/80) เพื่อคำนวณ % การเปลี่ยนแปลง</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">เกณฑ์: ภายใน 20% ของ preop = 2, 20-40% = 1, &gt;40% = 0</div>
+    </div>
+
+    <div class="card">
+      <h2>AMBULATION <span class="badge" id="p-score-ambulation">-</span></h2>
+      <div class="options" data-group="p-ambulation">
+        <label data-score="2"><input type="radio" name="p-ambulation"><span class="opt-text">เดินได้มั่นคง ไม่มีอาการมึนเวียน</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="p-ambulation"><span class="opt-text">เดินได้ต้องมีคนช่วยพยุง</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="p-ambulation"><span class="opt-text">เดินไม่ได้ / มีอาการมึนเวียนศีรษะ</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>NAUSEA / VOMITING <span class="badge" id="p-score-nausea">-</span></h2>
+      <div class="options" data-group="p-nausea">
+        <label data-score="2"><input type="radio" name="p-nausea"><span class="opt-text">น้อยมาก (Minimal)</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="p-nausea"><span class="opt-text">ปานกลาง (Moderate)</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="p-nausea"><span class="opt-text">รุนแรง (Severe)</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>PAIN <span class="badge" id="p-score-pain">-</span></h2>
+      <div class="options" data-group="p-pain">
+        <label data-score="2"><input type="radio" name="p-pain"><span class="opt-text">ปวดน้อย ผู้ป่วยรับได้ (Minimal)</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="p-pain"><span class="opt-text">ปวดปานกลาง (Moderate)</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="p-pain"><span class="opt-text">ปวดรุนแรง (Severe)</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>SURGICAL BLEEDING <span class="badge" id="p-score-bleeding">-</span></h2>
+      <div class="options" data-group="p-bleeding">
+        <label data-score="2"><input type="radio" name="p-bleeding"><span class="opt-text">เลือดออกน้อยมาก (Minimal)</span><span class="opt-score">= 2</span></label>
+        <label data-score="1"><input type="radio" name="p-bleeding"><span class="opt-text">เลือดออกปานกลาง (Moderate)</span><span class="opt-score">= 1</span></label>
+        <label data-score="0"><input type="radio" name="p-bleeding"><span class="opt-text">เลือดออกมาก (Severe)</span><span class="opt-score">= 0</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="refs">
+    <h3>📚 แหล่งอ้างอิง</h3>
+    <ol>
+      <li>Aldrete JA, Kroulik D. A postanesthetic recovery score. <i>Anesth Analg.</i> 1970;49(6):924-934. (ต้นฉบับ Aldrete Score; ฉบับ Modified เพิ่ม pulse-oximetry แทน color)</li>
+      <li>Butterworth JF, Mackey DC, Wasnick JD, eds. <i>Morgan &amp; Mikhail's Clinical Anesthesiology</i>. — Modified Aldrete Scoring System table.</li>
+      <li>Alexander JI, et al. Aldrete Scoring System. In: StatPearls [Internet]. Treasure Island (FL): StatPearls Publishing; 2023. Available from: <a href="https://www.ncbi.nlm.nih.gov/books/NBK594237/" target="_blank">ncbi.nlm.nih.gov/books/NBK594237</a></li>
+      <li>Chung F, Chan VW, Ong D. A post-anesthetic discharge scoring system for home readiness after ambulatory surgery. <i>J Clin Anesth.</i> 1995;7(6):500-506. (ต้นฉบับ PADSS)</li>
+      <li>Palumbo P, et al. Modified PADSS (Post Anaesthetic Discharge Scoring System) for monitoring outpatients discharge. <i>Ann Ital Chir.</i> 2013;84(6). Available from: <a href="https://pubmed.ncbi.nlm.nih.gov/23165318/" target="_blank">pubmed.ncbi.nlm.nih.gov/23165318</a></li>
+    </ol>
+  </div>
+</div>
+
+<div class="total-card">
+  <div>
+    <div class="label" id="total-label">Modified Aldrete Score</div>
+    <div class="verdict" id="verdict">รอข้อมูลให้ครบ</div>
+  </div>
+  <div class="score"><span id="totalScore">0</span>/10</div>
+</div>
+
+<script>
+// ---------- Tab switching ----------
+const tabBtns = document.querySelectorAll('.tab-btn');
+const panels = { aldrete: document.getElementById('panel-aldrete'), padss: document.getElementById('panel-padss') };
+const totalLabel = document.getElementById('total-label');
+let activeTab = 'aldrete';
+
+tabBtns.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    tabBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    Object.values(panels).forEach(p=>p.classList.remove('active'));
+    activeTab = btn.dataset.tab;
+    panels[activeTab].classList.add('active');
+    totalLabel.textContent = activeTab === 'aldrete' ? 'Modified Aldrete Score' : 'PADSS Score';
+    updateTotal();
+  });
+});
+
+// ---------- State ----------
+const aldreteState = { activity:null, respiration:null, consciousness:null, o2:null, circulation:null };
+const padssState = { vitals:null, ambulation:null, nausea:null, pain:null, bleeding:null };
+
+// ---------- Radio option handling (generic) ----------
+function setupOptions(container, stateObj, prefix){
+  container.querySelectorAll('.options').forEach(group=>{
+    const key = group.dataset.group.replace(prefix+'-','');
+    group.querySelectorAll('label').forEach(label=>{
+      label.addEventListener('click', ()=>{
+        group.querySelectorAll('label').forEach(l=>l.classList.remove('selected'));
+        label.classList.add('selected');
+        stateObj[key] = Number(label.dataset.score);
+        const badge = document.getElementById(prefix+'-score-'+key);
+        if(badge) badge.textContent = stateObj[key];
+        updateTotal();
+      });
+    });
+  });
+}
+setupOptions(document.getElementById('panel-aldrete'), aldreteState, 'a');
+setupOptions(document.getElementById('panel-padss'), padssState, 'p');
+
+// ---------- BP parsing ----------
+function parseSystolic(str){
+  if(!str) return NaN;
+  const match = str.match(/[\d.]+/);
+  return match ? parseFloat(match[0]) : NaN;
+}
+
+// Aldrete BP calc (±20 / ±20-50 / ±50)
+function calcAldreteBP(){
+  const preop = parseSystolic(document.getElementById('a-bpPreop').value);
+  const now = parseSystolic(document.getElementById('a-bpNow').value);
+  const resultEl = document.getElementById('a-bpResult');
+  if(!preop || !now || preop<=0){
+    resultEl.innerHTML = 'กรอกค่า BP ทั้งสองช่อง (เช่น 120/80) เพื่อคำนวณ % การเปลี่ยนแปลง';
+    aldreteState.circulation = null;
+    document.getElementById('a-score-circulation').textContent = '-';
+    updateTotal();
+    return;
+  }
+  const diffPct = Math.abs((now - preop) / preop) * 100;
+  let score, label;
+  if(diffPct <= 20){ score = 2; label = 'อยู่ในช่วง ±20% ของค่า Preop'; }
+  else if(diffPct <= 50){ score = 1; label = 'อยู่ในช่วง ±20-50% ของค่า Preop'; }
+  else { score = 0; label = 'เกิน ±50% ของค่า Preop'; }
+  aldreteState.circulation = score;
+  document.getElementById('a-score-circulation').textContent = score;
+  resultEl.innerHTML = `Systolic BP: ${preop} → ${now} mmHg (เปลี่ยนแปลง <b>${diffPct.toFixed(1)}%</b>) — ${label} → คะแนน <b>${score}</b>`;
+  updateTotal();
+}
+document.getElementById('a-bpPreop').addEventListener('input', calcAldreteBP);
+document.getElementById('a-bpNow').addEventListener('input', calcAldreteBP);
+
+// PADSS Vital signs calc (within 20% / 20-40% / >40%)
+function calcPadssBP(){
+  const preop = parseSystolic(document.getElementById('p-bpPreop').value);
+  const now = parseSystolic(document.getElementById('p-bpNow').value);
+  const resultEl = document.getElementById('p-bpResult');
+  if(!preop || !now || preop<=0){
+    resultEl.innerHTML = 'กรอกค่า BP ทั้งสองช่อง (เช่น 120/80) เพื่อคำนวณ % การเปลี่ยนแปลง';
+    padssState.vitals = null;
+    document.getElementById('p-score-vitals').textContent = '-';
+    updateTotal();
+    return;
+  }
+  const diffPct = Math.abs((now - preop) / preop) * 100;
+  let score, label;
+  if(diffPct <= 20){ score = 2; label = 'อยู่ในช่วง 20% ของค่า Preop'; }
+  else if(diffPct <= 40){ score = 1; label = 'อยู่ในช่วง 20-40% ของค่า Preop'; }
+  else { score = 0; label = 'เกิน 40% ของค่า Preop'; }
+  padssState.vitals = score;
+  document.getElementById('p-score-vitals').textContent = score;
+  resultEl.innerHTML = `Systolic BP: ${preop} → ${now} mmHg (เปลี่ยนแปลง <b>${diffPct.toFixed(1)}%</b>) — ${label} → คะแนน <b>${score}</b>`;
+  updateTotal();
+}
+document.getElementById('p-bpPreop').addEventListener('input', calcPadssBP);
+document.getElementById('p-bpNow').addEventListener('input', calcPadssBP);
+
+// ---------- Total ----------
+function updateTotal(){
+  const stateObj = activeTab === 'aldrete' ? aldreteState : padssState;
+  const vals = Object.values(stateObj);
+  const filled = vals.filter(v=>v!==null);
+  const total = filled.reduce((a,b)=>a+b,0);
+  document.getElementById('totalScore').textContent = total;
+  const verdictEl = document.getElementById('verdict');
+  const totalFields = vals.length;
+  if(filled.length < totalFields){
+    verdictEl.textContent = `กรอกแล้ว ${filled.length}/${totalFields} หมวด`;
+    verdictEl.className = 'verdict';
+  } else if(total >= 9){
+    verdictEl.textContent = activeTab === 'aldrete' ? '✅ พร้อมย้ายออกจาก PACU' : '✅ พร้อมให้กลับบ้านได้ (Fit for discharge)';
+    verdictEl.className = 'verdict ready';
+  } else {
+    verdictEl.textContent = '⚠️ ยังไม่พร้อม ต้องสังเกตอาการต่อ';
+    verdictEl.className = 'verdict notready';
+  }
+}
+updateTotal();
+</script>
+</body>
+</html>
